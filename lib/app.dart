@@ -2,6 +2,10 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
+import 'package:masrofy/core/constants/app_assets.dart';
+import 'package:masrofy/core/routes/app_routes.dart';
+import 'package:masrofy/core/routes/routes.dart';
 import 'package:masrofy/core/themes/app_sizes.dart';
 import 'package:masrofy/core/themes/app_theme.dart';
 import 'package:masrofy/core/themes/theme_mode_provider.dart';
@@ -19,7 +23,7 @@ class MyApp extends ConsumerWidget {
         designSize: Size(360, 690),
 
         builder: (context, child) {
-          return MaterialApp(
+          return MaterialApp.router(
             title: 'My App',
             debugShowCheckedModeBanner: false,
             locale: context.locale,
@@ -28,7 +32,7 @@ class MyApp extends ConsumerWidget {
             theme: AppTheme.light,
             darkTheme: AppTheme.dark,
             themeMode: themeMode,
-            home: HomePage(),
+            routerConfig: appRouter,
           );
         },
       ),
@@ -77,8 +81,28 @@ class HomePage extends ConsumerWidget {
               variant: ButtonVariant.outlined,
             ),
           ),
+          SizedBox(height: AppSizes.m),
+          Image.asset(AppAssets.goals, width: 200.w, height: 200.h),
+          SizedBox(height: AppSizes.m),
+          CustomButton(
+            text: "Go to Settings",
+            onPressed: () {
+              context.go(AppRoutes.settings);
+            },
+            variant: ButtonVariant.primary,
+          ),
         ],
       ),
+    );
+  }
+}
+
+class SettingsPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Settings')),
+      body: Center(child: Text('Settings Page')),
     );
   }
 }
