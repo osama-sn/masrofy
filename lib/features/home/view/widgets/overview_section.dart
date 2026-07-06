@@ -46,7 +46,7 @@ class OverviewSection extends StatelessWidget {
       },
       {
         'title': "الأهداف المكتملة",
-        'value': '2 / 5',
+        'value': '3 / 5',
         'currency': '',
         'icon': Icons.track_changes_rounded,
         'hasFilter': false,
