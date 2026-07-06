@@ -12,6 +12,7 @@ class CustomButton extends StatelessWidget {
   final double? height;
   final Widget? icon;
   final bool isDisabled;
+  final TextStyle? textStyle;
 
   const CustomButton({
     super.key,
@@ -22,6 +23,7 @@ class CustomButton extends StatelessWidget {
     this.width,
     this.height,
     this.icon,
+    this.textStyle,
     this.isDisabled = false,
   });
 
@@ -109,7 +111,7 @@ class CustomButton extends StatelessWidget {
           icon!,
           SizedBox(width: AppSizes.s),
         ],
-        Text(text),
+        Text(text,style: textStyle,),
       ],
     );
   }

@@ -24,9 +24,9 @@ class MyApp extends ConsumerWidget {
 
         builder: (context, child) {
           return MaterialApp.router(
-            title: 'My App',
+            title: 'مصروفي',
             debugShowCheckedModeBanner: false,
-            locale: context.locale,
+            locale: Locale('ar'),
             supportedLocales: context.supportedLocales,
             localizationsDelegates: context.localizationDelegates,
             theme: AppTheme.light,
@@ -40,69 +40,3 @@ class MyApp extends ConsumerWidget {
   }
 }
 
-class HomePage extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('appTitle').tr(),
-        actions: [
-          IconButton(
-            icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
-
-            onPressed: () {
-              ref.read(themeModeProvider.notifier).toggleThemeMode();
-            },
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Center(
-            child: Text(
-              'description',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ).tr(),
-          ),
-          SizedBox(height: AppSizes.m),
-          Padding(
-            padding: EdgeInsets.all(AppSizes.screenPadding),
-            child: CustomButton(
-              text: "changeLanguage".tr(),
-              onPressed: () {
-                context.setLocale(
-                  context.locale.languageCode == 'en'
-                      ? Locale('ar')
-                      : Locale('en'),
-                );
-              },
-              variant: ButtonVariant.outlined,
-            ),
-          ),
-          SizedBox(height: AppSizes.m),
-          Image.asset(AppAssets.goals, width: 200.w, height: 200.h),
-          SizedBox(height: AppSizes.m),
-          CustomButton(
-            text: "Go to Settings",
-            onPressed: () {
-              context.go(AppRoutes.settings);
-            },
-            variant: ButtonVariant.primary,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class SettingsPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Settings')),
-      body: Center(child: Text('Settings Page')),
-    );
-  }
-}
