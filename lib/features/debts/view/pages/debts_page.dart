@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:go_router/go_router.dart';
 
 import 'package:masrofy/core/extensions/build_context.dart';
 import 'package:masrofy/core/extensions/num_extension.dart';
@@ -8,6 +7,7 @@ import 'package:masrofy/core/extensions/widget_extension.dart';
 import 'package:masrofy/core/themes/app_colors.dart';
 import 'package:masrofy/core/themes/app_sizes.dart';
 import 'package:masrofy/core/widgets/custom_app_scaffold.dart';
+import 'package:masrofy/features/income/presentation/pages/income_page.dart';
 
 class DebtsPage extends StatefulWidget {
   const DebtsPage({super.key});
@@ -70,9 +70,12 @@ class _DebtsPageState extends State<DebtsPage> {
     // Filter debts based on selected tab
     final filteredDebts = _allDebts.where((debt) {
       if (_selectedTabIndex == 1) {
-        return !debt['isPaid'] && double.parse((debt['remaining'] as String).replaceAll(',', '')) > 0;
+        return !debt['isPaid'] &&
+            double.parse((debt['remaining'] as String).replaceAll(',', '')) > 0;
       } else if (_selectedTabIndex == 2) {
-        return debt['isPaid'] || double.parse((debt['remaining'] as String).replaceAll(',', '')) == 0;
+        return debt['isPaid'] ||
+            double.parse((debt['remaining'] as String).replaceAll(',', '')) ==
+                0;
       }
       return !debt['isPaid']; // Default Tab 0 (كل الديون) shows active debts
     }).toList();
@@ -84,39 +87,14 @@ class _DebtsPageState extends State<DebtsPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Header Row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  onPressed: () => context.pop(),
-                  icon: Icon(
-                    Icons.arrow_back_rounded,
-                    color: iconColor,
-                    size: AppSizes.iconM,
-                  ),
-                ),
-                Text(
-                  'الديون',
-                  style: context.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                IconButton(
-                  onPressed: () {},
-                  icon: Icon(
-                    Icons.add_rounded,
-                    color: iconColor,
-                    size: AppSizes.iconM,
-                  ),
-                ),
-              ],
-            ),
+            CustomAppBar(title: "الديون"),
+
             AppSizes.m.verticalSpace,
-      
+
             // Red Coral Gradient Card
             const _DebtsSummaryCard(),
             AppSizes.l.verticalSpace,
-      
+
             // Custom tab bar
             Row(
               textDirection: TextDirection.rtl,
@@ -128,7 +106,7 @@ class _DebtsPageState extends State<DebtsPage> {
               ],
             ),
             AppSizes.l.verticalSpace,
-      
+
             // List of Debts
             if (filteredDebts.isEmpty)
               Center(
@@ -189,7 +167,9 @@ class _DebtsPageState extends State<DebtsPage> {
             style: context.textTheme.titleSmall?.copyWith(
               color: isSelected
                   ? AppColors.expense
-                  : (isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight),
+                  : (isDark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondaryLight),
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
             ),
           ),
@@ -222,7 +202,7 @@ class _DebtsSummaryCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius:AppSizes.rXL.radius,
+        borderRadius: AppSizes.rXL.radius,
         boxShadow: [
           BoxShadow(
             color: AppColors.expense.withValues(alpha: 0.15),
@@ -309,8 +289,6 @@ class _DebtsSummaryCard extends StatelessWidget {
               ),
             ],
           ),
-          
-
         ],
       ),
     );
@@ -359,15 +337,14 @@ class _DebtCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    title,
-                    style: context.textTheme.titleMedium
-                  ),
+                  Text(title, style: context.textTheme.titleMedium),
                   4.verticalSpace,
                   Text(
                     subtitle,
                     style: context.textTheme.bodySmall?.copyWith(
-                      color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                      color: isDark
+                          ? AppColors.textSecondaryDark
+                          : AppColors.textSecondaryLight,
                     ),
                   ),
                 ],
@@ -378,14 +355,15 @@ class _DebtCard extends StatelessWidget {
                 children: [
                   Text(
                     '$remaining EGP',
-                    style: context.textTheme.titleMedium?.copyWith(
-                    ),
+                    style: context.textTheme.titleMedium?.copyWith(),
                   ),
                   2.verticalSpace,
                   Text(
                     'تبقي',
                     style: context.textTheme.labelSmall?.copyWith(
-                      color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                      color: isDark
+                          ? AppColors.textSecondaryDark
+                          : AppColors.textSecondaryLight,
                     ),
                   ),
                 ],
@@ -403,8 +381,7 @@ class _DebtCard extends StatelessWidget {
                   children: [
                     Text(
                       '$percentage%',
-                      style: context.textTheme.labelSmall?.copyWith(
-                      ),
+                      style: context.textTheme.labelSmall?.copyWith(),
                     ),
                     8.horizontalSpace,
                     Expanded(
@@ -413,8 +390,12 @@ class _DebtCard extends StatelessWidget {
                         child: LinearProgressIndicator(
                           value: progressValue,
                           minHeight: 6.h,
-                          backgroundColor: isDark ? AppColors.borderDark : AppColors.grey100,
-                          valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+                          backgroundColor: isDark
+                              ? AppColors.borderDark
+                              : AppColors.grey100,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            progressColor,
+                          ),
                         ),
                       ),
                     ),
@@ -429,14 +410,18 @@ class _DebtCard extends StatelessWidget {
                   Text(
                     '$total EGP',
                     style: context.textTheme.bodySmall?.copyWith(
-                      color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                      color: isDark
+                          ? AppColors.textSecondaryDark
+                          : AppColors.textSecondaryLight,
                     ),
                   ),
                   2.verticalSpace,
                   Text(
                     'الإجمالي',
                     style: context.textTheme.labelSmall?.copyWith(
-                      color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                      color: isDark
+                          ? AppColors.textSecondaryDark
+                          : AppColors.textSecondaryLight,
                     ),
                   ),
                 ],

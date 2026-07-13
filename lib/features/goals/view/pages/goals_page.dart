@@ -8,6 +8,7 @@ import 'package:masrofy/core/extensions/widget_extension.dart';
 import 'package:masrofy/core/themes/app_colors.dart';
 import 'package:masrofy/core/themes/app_sizes.dart';
 import 'package:masrofy/core/widgets/custom_app_scaffold.dart';
+import 'package:masrofy/features/income/presentation/pages/income_page.dart';
 
 class GoalsPage extends StatefulWidget {
   const GoalsPage({super.key});
@@ -22,7 +23,7 @@ class _GoalsPageState extends State<GoalsPage> {
   final List<Map<String, dynamic>> _allGoals = [
     {
       'title': 'شراء سيارة',
-      'current':'250,000',
+      'current': '250,000',
       'target': '250,000',
       'percentage': 100,
       'progress': 1,
@@ -90,28 +91,8 @@ class _GoalsPageState extends State<GoalsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  onPressed: () => context.pop(),
-                  icon: Icon(
-                    Icons.arrow_back_rounded,
-                    color: iconColor,
-                    size: AppSizes.iconM,
-                  ),
-                ),
-                Text('الأهداف المالية', style: context.textTheme.titleLarge),
-                IconButton(
-                  onPressed: () {},
-                  icon: Icon(
-                    Icons.add_rounded,
-                    color: iconColor,
-                    size: AppSizes.iconM,
-                  ),
-                ),
-              ],
-            ),
+            CustomAppBar(title: "الأهداف الماليه"),
+
             AppSizes.m.verticalSpace,
 
             const _GoalsSummaryCard(),
@@ -328,15 +309,9 @@ class _GoalCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: context.textTheme.titleMedium
-                  ),
+                  Text(title, style: context.textTheme.titleMedium),
                   4.verticalSpace,
-                  Text(
-                    '$current EGP',
-                    style: context.textTheme.bodyMedium
-                  ),
+                  Text('$current EGP', style: context.textTheme.bodyMedium),
                   2.verticalSpace,
                   Text(
                     'من $target EGP',
@@ -365,7 +340,7 @@ class _GoalCard extends StatelessWidget {
               SizedBox(
                 width: 80.w,
                 child: ClipRRect(
-                  borderRadius:10.r.radius,
+                  borderRadius: 10.r.radius,
                   child: LinearProgressIndicator(
                     value: progressValue,
                     minHeight: 6.h,
