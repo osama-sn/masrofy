@@ -9,9 +9,8 @@ import 'package:masrofy/features/home/view/pages/home_page.dart';
 import 'package:masrofy/features/income/presentation/pages/income_page.dart';
 
 
-
 final routerProvider = Provider<GoRouter>((ref) {
-  final authRepo = ref.read(authRepositoryProvider);
+  final authRepo = ref.read(authRepoProvider);
   return GoRouter(
     initialLocation: AppRoutes.auth,
     redirect: (context, state) {

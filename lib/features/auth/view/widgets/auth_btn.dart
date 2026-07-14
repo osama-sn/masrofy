@@ -15,19 +15,16 @@ class AuthBtn extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authProvider = ref.watch(authViewModelProvider);
+    final authController = ref.watch(authControllerProvider);
     return CustomButton(
-      isLoading: authProvider.isLoading,
+      isLoading: authController.isLoading,
       text: "التسجيل من خلال جوجل",
       variant: ButtonVariant.outlined,
       onPressed: () async {
-        final success = await ref
-            .read(authViewModelProvider.notifier)
+        bool success = await ref
+            .read(authControllerProvider.notifier)
             .signInWithGoogle();
-
-        log(success.toString());
-        if (!context.mounted) return;
-        if (success) {
+        if (success && context.mounted) {
           context.go(AppRoutes.home);
         }
       },

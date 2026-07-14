@@ -33,29 +33,20 @@ class AuthRepository {
         idToken: googleAuth.idToken,
       );
 
-      final userCredential = await _auth.signInWithCredential(
-        credential,
-      );
+      final userCredential = await _auth.signInWithCredential(credential);
 
       if (userCredential.user != null) {
         await _saveUserToFirestore(userCredential.user!);
       }
 
       return userCredential;
-    } on FirebaseAuthException catch (e) {
-      log('Error: $e, StackTrace: ${e.stackTrace}');
-      rethrow;
-    } catch (e, stackTrace) {
-      log('Error: $e, StackTrace: $stackTrace');
-      rethrow;
+    } catch (e, st) {
+      log("error $e  St $st");
     }
   }
 
-  // get user state  auth false
-  Stream<User?> get authStateChanges => _auth.authStateChanges();
   // get user
   User? get currentUser => _auth.currentUser;
-
   CollectionReference<Map<String, dynamic>> get _userCollection =>
       _firestore.collection('users');
 
@@ -70,7 +61,7 @@ class AuthRepository {
   }
 }
 
-final authRepositoryProvider = Provider<AuthRepository>(
+final authRepoProvider = Provider<AuthRepository>(
   (ref) => AuthRepository(
     auth: ref.watch(firebaseAuthProvider),
     firestore: ref.watch(firestoreProvider),
