@@ -8,13 +8,14 @@ import 'package:masrofy/core/extensions/num_extension.dart';
 import 'package:masrofy/core/extensions/widget_extension.dart';
 import 'package:masrofy/core/themes/app_colors.dart';
 import 'package:masrofy/core/themes/app_sizes.dart';
+import 'package:masrofy/core/widgets/custom_app_bar.dart';
 import 'package:masrofy/core/widgets/custom_app_scaffold.dart';
 import 'package:masrofy/features/goals/controllers/goal_controller.dart';
 import 'package:masrofy/features/goals/models/goal_modal.dart';
 import 'package:masrofy/features/goals/view/widgets/goal_card.dart';
 import 'package:masrofy/features/goals/view/widgets/goal_form.dart';
 import 'package:masrofy/features/goals/view/widgets/summery_card.dart';
-import 'package:masrofy/features/income/presentation/pages/income_page.dart';
+import 'package:masrofy/features/income/view/pages/income_page.dart';
 
 class GoalsPage extends ConsumerStatefulWidget {
   const GoalsPage({super.key});
@@ -51,7 +52,7 @@ class _GoalsPageState extends ConsumerState<GoalsPage> {
           children: [
             CustomAppBar(
               title: "الأهداف الماليه",
-              addNewItem: _showAddGoalSheet,
+              onAddPressed: _showAddGoalSheet,
             ),
             goalsController.when(
               data: (List<GoalModal> goals) {

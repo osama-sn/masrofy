@@ -6,7 +6,7 @@ import 'package:masrofy/features/auth/view/pages/auth_page.dart';
 import 'package:masrofy/features/debts/view/pages/debts_page.dart';
 import 'package:masrofy/features/goals/view/pages/goals_page.dart';
 import 'package:masrofy/features/home/view/pages/home_page.dart';
-import 'package:masrofy/features/income/presentation/pages/income_page.dart';
+import 'package:masrofy/features/income/view/pages/income_page.dart';
 
 
 final routerProvider = Provider<GoRouter>((ref) {
