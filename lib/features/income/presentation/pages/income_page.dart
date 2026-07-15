@@ -14,7 +14,6 @@ class IncomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     final List<Map<String, dynamic>> incomeSources = [
       {
         'title': 'الراتب الشهري',
@@ -90,8 +89,9 @@ class IncomePage extends StatelessWidget {
 }
 
 class CustomAppBar extends StatelessWidget {
-  const CustomAppBar({super.key, required this.title});
+  const CustomAppBar({super.key, required this.title, this.addNewItem});
   final String title;
+  final VoidCallback? addNewItem;
 
   @override
   Widget build(BuildContext context) {
@@ -108,7 +108,7 @@ class CustomAppBar extends StatelessWidget {
         ),
         Text(title, style: context.textTheme.titleLarge),
         IconButton(
-          onPressed: () {},
+          onPressed: addNewItem,
           icon: Icon(
             Icons.add_rounded,
             color: context.colorScheme.onSurface,
