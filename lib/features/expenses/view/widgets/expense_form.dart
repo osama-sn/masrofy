@@ -3,10 +3,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:masrofy/core/extensions/build_context.dart';
 import 'package:masrofy/core/themes/app_colors.dart';
 import 'package:masrofy/core/themes/app_sizes.dart';
-import 'package:masrofy/features/income/data/category.dart';
+import 'package:masrofy/core/widgets/custom_text_field.dart';
+import 'package:masrofy/features/expenses/models/expnese_category.dart';
 
-class IncomeFormSheet extends StatelessWidget {
-  const IncomeFormSheet({
+class ExpenseFormSheet extends StatelessWidget {
+  const ExpenseFormSheet({
     super.key,
     required this.isDark,
     required this.isEditing,
@@ -28,6 +29,7 @@ class IncomeFormSheet extends StatelessWidget {
   final ValueChanged<String> onCategoryChanged;
   final VoidCallback onSave;
   final VoidCallback? onDelete;
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -61,7 +63,7 @@ class IncomeFormSheet extends StatelessWidget {
 
             // Title
             Text(
-              isEditing ? 'تعديل الدخل' : 'إضافة دخل جديد',
+              isEditing ? 'تعديل المصروف' : 'إضافة مصروف جديد',
               style: context.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -69,46 +71,36 @@ class IncomeFormSheet extends StatelessWidget {
             ),
             AppSizes.l.verticalSpace,
 
-            // Title field
-            TextField(
+            CustomTextField(
               controller: titleController,
-              textDirection: TextDirection.rtl,
-              decoration: const InputDecoration(
-                labelText: 'اسم الدخل',
-                hintText: 'مثال: راتب شهر يوليو',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.title_rounded),
-              ),
+              label: 'اسم المصروف',
+              hint: 'مثال: مشتريات البقالة',
+              prefixIcon: const Icon(Icons.title_rounded),
             ),
             AppSizes.m.verticalSpace,
 
-            // Amount field
-            TextField(
+            CustomTextField(
               controller: amountController,
+              label: 'المبلغ',
+              hint: '0.00',
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
-              textDirection: TextDirection.ltr,
-              textAlign: TextAlign.center,
-              decoration: const InputDecoration(
-                labelText: 'المبلغ',
-                hintText: '0.00',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.payments_rounded),
-                suffixText: 'EGP',
+              prefixIcon: const Icon(Icons.payments_rounded),
+              suffixIcon: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                child: Text(
+                  'EGP',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
             ),
             AppSizes.m.verticalSpace,
 
-            // Description field
-            TextField(
+            CustomTextField(
               controller: descriptionController,
-              textDirection: TextDirection.rtl,
-              decoration: const InputDecoration(
-                labelText: 'وصف (اختياري)',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.notes_rounded),
-              ),
+              label: 'وصف (اختياري)',
+              prefixIcon: const Icon(Icons.notes_rounded),
             ),
             AppSizes.l.verticalSpace,
 
@@ -126,11 +118,11 @@ class IncomeFormSheet extends StatelessWidget {
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 reverse: true,
-                itemCount: IncomeCategories.values.length,
+                itemCount: ExpenseCategory.categories.length,
                 separatorBuilder: (_, __) => 10.horizontalSpace,
                 itemBuilder: (context, index) {
-               final category = IncomeCategories.values[index];
-                  final key = category.key;
+                  final category = ExpenseCategory.categories[index];
+                  final key = category.id;
                   final isSelected = selectedCategory == key;
                   final color = category.color;
 
@@ -160,14 +152,14 @@ class IncomeFormSheet extends StatelessWidget {
                                 : null,
                           ),
                           child: Icon(
-                           category.icon,
+                            category.icon,
                             color: isSelected ? Colors.white : color,
                             size: 22.sp,
                           ),
                         ),
                         4.verticalSpace,
                         Text(
-                         category.label,
+                          category.nameAr, // Arabic label
                           style: context.textTheme.bodySmall?.copyWith(
                             color: isSelected
                                 ? (isDark ? Colors.white : Colors.black)
@@ -195,7 +187,7 @@ class IncomeFormSheet extends StatelessWidget {
                     child: TextButton(
                       onPressed: onDelete,
                       child: const Text(
-                        'حذف الدخل',
+                        'حذف المصروف',
                         style: TextStyle(color: AppColors.error),
                       ),
                     ),
@@ -204,7 +196,7 @@ class IncomeFormSheet extends StatelessWidget {
                   width: double.infinity,
                   child: FilledButton(
                     onPressed: onSave,
-                    child: Text(isEditing ? 'تحديث الدخل' : 'حفظ الدخل'),
+                    child: Text(isEditing ? 'تحديث المصروف' : 'حفظ المصروف'),
                   ),
                 ),
               ],

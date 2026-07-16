@@ -17,6 +17,7 @@ class IncomeEntryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
 final category = IncomeCategories.values.firstWhere(
+
   (e) => e.key == entry.category,
   orElse: () => IncomeCategories.other,
 );

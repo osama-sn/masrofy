@@ -1,161 +1,225 @@
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:masrofy/core/constants/app_assets.dart';
+import 'package:masrofy/core/constants/data.dart';
 import 'package:masrofy/core/extensions/build_context.dart';
 import 'package:masrofy/core/extensions/num_extension.dart';
 import 'package:masrofy/core/extensions/widget_extension.dart';
 import 'package:masrofy/core/themes/app_colors.dart';
 import 'package:masrofy/core/themes/app_sizes.dart';
+import 'package:masrofy/core/widgets/custom_app_bar.dart';
+import 'package:masrofy/features/expenses/controller/expnese_controller.dart';
+import 'package:masrofy/features/expenses/models/expense_entry_model.dart';
+import 'package:masrofy/features/expenses/models/expnese_category.dart';
+import 'package:masrofy/features/expenses/view/widgets/add_expense.dart';
+import 'package:masrofy/features/expenses/view/widgets/months_list.dart';
+import 'package:masrofy/features/home/view/widgets/summery_card.dart';
 
-class ExpensesTab extends StatelessWidget {
-  const ExpensesTab({super.key});
+class TransactionsTab extends ConsumerStatefulWidget {
+  const TransactionsTab({super.key});
+
+  @override
+  ConsumerState<TransactionsTab> createState() => _TransactionsTabState();
+}
+
+class _TransactionsTabState extends ConsumerState<TransactionsTab> {
+  int _setMonth = DateTime.now().month;
+  int _setYear = DateTime.now().year;
+  String formatDateLabel(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final checkDate = DateTime(date.year, date.month, date.day);
+
+    if (checkDate == today) {
+      return 'اليوم';
+    } else if (checkDate == yesterday) {
+      return 'أمس';
+    } else {
+      return DateFormat('d MMMM yyyy', 'ar').format(date);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final expenseController = ref.watch(expenseControllerProvider);
     final isDark = context.isDarkMode;
-
-    final List<Map<String, dynamic>> groups = [
-      {
-        'date': 'اليوم',
-        'items': [
-          {
-            'title': 'مطعم',
-            'subtitle': 'غداء مع الأصدقاء',
-            'time': '12:30 م',
-            'amount': '180',
-            'icon': Icons.restaurant_rounded,
-            'iconColor': AppColors.expense,
-            'isHighlighted': true,
-          },
-          {
-            'title': 'مواصلات',
-            'subtitle': 'مترو',
-            'time': '08:15 ص',
-            'amount': '20',
-            'icon': Icons.directions_car_rounded,
-            'iconColor': AppColors.blue,
-            'isHighlighted': false,
-          },
-          {
-            'title': 'قهوة',
-            'subtitle': 'ستاربكس',
-            'time': '07:45 ص',
-            'amount': '45',
-            'icon': Icons.local_cafe_rounded,
-            'iconColor': AppColors.orange,
-            'isHighlighted': false,
-          },
-          {
-            'title': 'تسوق',
-            'subtitle': 'من السوبر ماركت',
-            'time': '06:30 م',
-            'amount': '215',
-            'icon': Icons.shopping_bag_rounded,
-            'iconColor': AppColors.success,
-            'isHighlighted': false,
-          },
-        ],
-      },
-      {
-        'date': 'أمس',
-        'items': [
-          {
-            'title': 'فواتير',
-            'subtitle': 'فاتورة الكهرباء',
-            'time': '4:30 م',
-            'amount': '350',
-            'icon': Icons.electric_bolt_rounded,
-            'iconColor': AppColors.purple,
-            'isHighlighted': true,
-          },
-          {
-            'title': 'تسوق',
-            'subtitle': 'ملابس',
-            'time': '2:15 م',
-            'amount': '320',
-            'icon': Icons.shopping_bag_rounded,
-            'iconColor': AppColors.success,
-            'isHighlighted': false,
-          },
-        ],
-      },
-    ];
 
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text("المعاملات", style: context.textTheme.titleLarge).center(),
+          CustomAppBar(
+            title: "المصروفات",
+            onAddPressed: () => AddExpenseBottomSheet.show(context),
+          ).center(),
           AppSizes.m.verticalSpace,
 
-          // Summary Card
-          const _ExpensesSummaryCard(),
-          AppSizes.m.verticalSpace,
+          expenseController.when(
+            data: (data) {
+              final filterd = data
+                  .where((e) => e.month == _setMonth && e.year == _setYear)
+                  .toList();
+              filterd.sort((a, b) => b.date.compareTo(a.date));
+              final totalExpenses = filterd.fold<double>(
+                0,
+                (sum, e) => sum + e.amount,
+              );
+              final keys = {
+                '${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}',
+                ...data.map((e) => e.monthYear),
+              }.toList()..sort((a, b) => b.compareTo(a));
 
-          // List of groups
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: groups.length,
-            itemBuilder: (context, groupIndex) {
-              final group = groups[groupIndex];
-              final date = group['date'] as String;
-              final items = group['items'] as List<Map<String, dynamic>>;
-
+              final Map<String, List<ExpenseEntryModel>> grouped = {};
+              for (var entry in filterd) {
+                final label = formatDateLabel(entry.date);
+                if (!grouped.containsKey(label)) {
+                  grouped[label] = [];
+                }
+                grouped[label]!.add(entry);
+              }
+              // {
+              //   "اليوم": [
+              //     شراء بقالة (150 EGP),
+              //     عشاء (200 EGP)
+              //   ],
+              //   "أمس": [
+              //     بنزين (300 EGP)
+              //   ]
+              // }
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Group Date Label
-                  Text(
-                    date,
-                    style: context.textTheme.bodySmall?.copyWith(
-                      color: isDark
-                          ? AppColors.textSecondaryDark
-                          : AppColors.textSecondaryLight,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.right,
-                  ).paddingAll(AppSizes.s),
 
-                  // Group Card Wrapper
-                  Container(
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.cardDark : Colors.white,
-                      borderRadius: AppSizes.rL.radius,
-                      border: Border.all(
-                        color: isDark
-                            ? AppColors.borderDark
-                            : AppColors.borderLight,
-                      ),
-                    ),
-                    child: ListView.separated(
+                children: [
+                  _ExpensesSummaryCard(
+                    total: totalExpenses.toString(),
+                    monthLabel: "${months[_setMonth - 1]}-$_setYear",
+                  ),
+                  AppSizes.l.verticalSpace,
+                  MonthSelector(
+                    monthYearKeys: keys,
+                    selectedMonth: _setMonth,
+                    selectedYear: _setYear,
+                    activeColor: AppColors.expense,
+                    onMonthSelected: (m, y) => setState(() {
+                      _setMonth = m;
+                      _setYear = y;
+                    }),
+                  ),
+                  AppSizes.l.verticalSpace,
+                  if (filterd.isEmpty)
+                    Column(
+                      children: [
+                        AppSizes.xxl.verticalSpace,
+                        Icon(
+                          Icons.shopping_bag_outlined,
+                          size: AppSizes.iconXL,
+                          color: AppColors.grey400,
+                        ),
+                        AppSizes.m.verticalSpace,
+                        Text(
+                          'لا توجد مصروفات مسجلة لهذا الشهر',
+                          style: context.textTheme.bodyMedium?.copyWith(
+                            color: AppColors.grey500,
+                          ),
+                        ),
+                        AppSizes.m.verticalSpace,
+                        FilledButton.icon(
+                          onPressed: () => AddExpenseBottomSheet.show(context),
+                          icon: const Icon(Icons.add_rounded),
+                          label: Text('إضافة مصروف'),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.expense,
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ).center()
+                  else
+                    ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      itemCount: items.length,
-                      separatorBuilder: (context, index) => Divider(
-                        height: 1,
-                        thickness: 0.5,
-                        color: isDark
-                            ? AppColors.dividerDark
-                            : AppColors.dividerLight,
-                      ),
-                      itemBuilder: (context, itemIndex) {
-                        final item = items[itemIndex];
-                        return _TransactionItem(
-                          title: item['title'] as String,
-                          subtitle: item['subtitle'] as String,
-                          time: item['time'] as String,
-                          amount: item['amount'] as String,
-                          icon: item['icon'] as IconData,
-                          iconColor: item['iconColor'] as Color,
-                          isHighlighted: item['isHighlighted'] as bool,
+                      itemCount: grouped.keys.length,
+                      itemBuilder: (context, index) {
+                        final dateLabel = grouped.keys.elementAt(index);
+                        final items = grouped[dateLabel]!;
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Padding(
+                              padding: EdgeInsetsGeometry.symmetric(
+                                vertical: 8.h,
+                              ),
+                              child: Text(
+                                dateLabel,
+                                style: context.textTheme.bodySmall?.copyWith(
+                                  color: isDark
+                                      ? AppColors.textSecondaryDark
+                                      : AppColors.textSecondaryLight,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.right,
+                              ),
+                            ),
+                            Container(
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? AppColors.cardDark
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(
+                                  AppSizes.rL,
+                                ),
+                                border: Border.all(
+                                  color: isDark
+                                      ? AppColors.borderDark
+                                      : AppColors.borderLight,
+                                ),
+                              ),
+                              child: ListView.separated(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: items.length,
+                                separatorBuilder: (context, index) => Divider(
+                                  height: 1,
+                                  thickness: 0.5,
+                                  color: isDark
+                                      ? AppColors.dividerDark
+                                      : AppColors.dividerLight,
+                                ),
+                                itemBuilder: (context, itemIndex) {
+                                  final item = items[itemIndex];
+                                  return InkWell(
+                                    onTap: () {
+                                      AddExpenseBottomSheet.show(
+                                        context,
+                                        entry: item,
+                                      );
+                                    },
+                                    child: _TransactionItem(
+                                      expenseEntryModel: item,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
                         );
                       },
                     ),
-                  ),
                 ],
               );
             },
+
+            error: (err, stack) => Text(
+              'تعذر تحميل المصروفات',
+              style: context.textTheme.bodyMedium,
+            ).center().paddingAll(AppSizes.xl),
+            loading: () => CircularProgressIndicator.adaptive()
+                .center()
+                .paddingAll(AppSizes.xl),
           ),
         ],
       ).paddingAll(AppSizes.screenPadding),
@@ -164,7 +228,10 @@ class ExpensesTab extends StatelessWidget {
 }
 
 class _ExpensesSummaryCard extends StatelessWidget {
-  const _ExpensesSummaryCard();
+  final String total;
+  final String monthLabel;
+
+  const _ExpensesSummaryCard({required this.total, required this.monthLabel});
 
   @override
   Widget build(BuildContext context) {
@@ -201,7 +268,7 @@ class _ExpensesSummaryCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.baseline,
                 textBaseline: TextBaseline.alphabetic,
                 children: [
-                  Text('3,850', style: context.textTheme.headlineMedium),
+                  Text(total, style: context.textTheme.headlineMedium),
                   AppSizes.s.horizontalSpace,
                   Text('EGP', style: context.textTheme.titleMedium),
                 ],
@@ -223,7 +290,7 @@ class _ExpensesSummaryCard extends StatelessWidget {
                       size: 16,
                     ),
                     AppSizes.xs.horizontalSpace,
-                    Text('هذا الشهر', style: context.textTheme.bodySmall),
+                    Text(monthLabel, style: context.textTheme.bodySmall),
                   ],
                 ),
               ),
@@ -245,27 +312,16 @@ class _ExpensesSummaryCard extends StatelessWidget {
 }
 
 class _TransactionItem extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final String time;
-  final String amount;
-  final IconData icon;
-  final Color iconColor;
-  final bool isHighlighted;
+  final ExpenseEntryModel expenseEntryModel;
 
-  const _TransactionItem({
-    required this.title,
-    required this.subtitle,
-    required this.time,
-    required this.amount,
-    required this.icon,
-    required this.iconColor,
-    required this.isHighlighted,
-  });
+  const _TransactionItem({required this.expenseEntryModel});
 
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
+    final category = ExpenseCategory.getById(expenseEntryModel.category);
+    final categoryName = category.nameAr;
+    final timeStr = DateFormat('jm', 'ar').format(expenseEntryModel.date);
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: AppSizes.m, vertical: 12.h),
@@ -278,24 +334,28 @@ class _TransactionItem extends StatelessWidget {
                 width: 40.w,
                 height: 40.h,
                 decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.1),
+                  color: category.color.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, color: iconColor, size: AppSizes.iconS),
+                child: Icon(
+                  category.icon,
+                  color: category.color,
+                  size: AppSizes.iconS,
+                ),
               ),
               AppSizes.m.horizontalSpace,
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    title,
+                    expenseEntryModel.title,
                     style: context.textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   4.verticalSpace,
                   Text(
-                    subtitle,
+                    expenseEntryModel.description,
                     style: context.textTheme.bodySmall?.copyWith(
                       color: isDark
                           ? AppColors.textSecondaryDark
@@ -311,7 +371,7 @@ class _TransactionItem extends StatelessWidget {
 
           // Middle: Time
           Text(
-            time,
+            timeStr,
             style: context.textTheme.bodySmall?.copyWith(
               color: isDark
                   ? AppColors.textSecondaryDark
@@ -323,13 +383,9 @@ class _TransactionItem extends StatelessWidget {
 
           // Left: Amount
           Text(
-            '$amount EGP',
+            '${expenseEntryModel.amount} EGP',
             style: context.textTheme.bodyLarge?.copyWith(
-              color: isHighlighted
-                  ? AppColors.expense
-                  : (isDark
-                        ? AppColors.textPrimaryDark
-                        : AppColors.textPrimaryLight),
+              color: AppColors.expense,
               fontWeight: FontWeight.bold,
             ),
           ),
