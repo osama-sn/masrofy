@@ -5,6 +5,7 @@ import 'package:masrofy/core/extensions/num_extension.dart';
 import 'package:masrofy/core/themes/app_colors.dart';
 import 'package:masrofy/core/themes/app_sizes.dart';
 import 'package:masrofy/features/income/data/income_entry_model.dart';
+import 'package:masrofy/features/income/data/category.dart';
 
 class IncomeEntryCard extends StatelessWidget {
   const IncomeEntryCard({super.key, required this.entry, required this.onTap});
@@ -15,8 +16,10 @@ class IncomeEntryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
-    final catInfo = _categoryInfo(entry.category);
-
+final category = IncomeCategories.values.firstWhere(
+  (e) => e.key == entry.category,
+  orElse: () => IncomeCategories.other,
+);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppSizes.rL),
@@ -37,12 +40,12 @@ class IncomeEntryCard extends StatelessWidget {
               width: 44.w,
               height: 44.h,
               decoration: BoxDecoration(
-                color: catInfo.color.withValues(alpha: 0.1),
+                color: category.color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppSizes.rM),
               ),
               child: Icon(
-                catInfo.icon,
-                color: catInfo.color,
+                category.icon,
+                color: category.color,
                 size: AppSizes.iconM,
               ),
             ),
@@ -82,7 +85,7 @@ class IncomeEntryCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${_formatAmount(entry.amount)} EGP',
+                  '${entry.amount} EGP',
                   style: context.textTheme.titleMedium?.copyWith(
                     color: AppColors.income,
                     fontWeight: FontWeight.bold,
@@ -90,7 +93,7 @@ class IncomeEntryCard extends StatelessWidget {
                 ),
                 AppSizes.xs.verticalSpace,
                 Text(
-                  catInfo.label,
+                  category.label,
                   style: context.textTheme.bodySmall?.copyWith(
                     color: isDark
                         ? AppColors.textSecondaryDark
@@ -105,60 +108,5 @@ class IncomeEntryCard extends StatelessWidget {
     );
   }
 
-  static _CategoryInfo _categoryInfo(String category) {
-    switch (category) {
-      case 'salary':
-        return _CategoryInfo(
-          icon: Icons.business_center_rounded,
-          color: AppColors.primary,
-          label: 'راتب',
-        );
-      case 'freelance':
-        return _CategoryInfo(
-          icon: Icons.laptop_mac_rounded,
-          color: AppColors.purple,
-          label: 'عمل حر',
-        );
-      case 'investment':
-        return _CategoryInfo(
-          icon: Icons.trending_up_rounded,
-          color: AppColors.cyan,
-          label: 'استثمار',
-        );
-      case 'bonus':
-        return _CategoryInfo(
-          icon: Icons.card_giftcard_rounded,
-          color: AppColors.accent,
-          label: 'مكافأة',
-        );
-      default:
-        return _CategoryInfo(
-          icon: Icons.more_horiz_rounded,
-          color: AppColors.success,
-          label: 'أخرى',
-        );
-    }
-  }
-}
-
-class _CategoryInfo {
-  final IconData icon;
-  final Color color;
-  final String label;
-
-  const _CategoryInfo({
-    required this.icon,
-    required this.color,
-    required this.label,
-  });
-}
-
-String _formatAmount(double value) {
-  final fixed = value % 1 == 0
-      ? value.toStringAsFixed(0)
-      : value.toStringAsFixed(2);
-  return fixed.replaceAllMapped(
-    RegExp(r'\B(?=(\d{3})+(?!\d))'),
-    (match) => ',',
-  );
+ 
 }

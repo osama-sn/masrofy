@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:masrofy/core/extensions/build_context.dart';
 import 'package:masrofy/core/themes/app_colors.dart';
 import 'package:masrofy/core/themes/app_sizes.dart';
+import 'package:masrofy/features/income/data/category.dart';
 
 class IncomeFormSheet extends StatelessWidget {
   const IncomeFormSheet({
@@ -27,40 +28,6 @@ class IncomeFormSheet extends StatelessWidget {
   final ValueChanged<String> onCategoryChanged;
   final VoidCallback onSave;
   final VoidCallback? onDelete;
-
-  static const _categories = [
-    {
-      'key': 'salary',
-      'label': 'راتب',
-      'icon': Icons.business_center_rounded,
-      'color': AppColors.primary,
-    },
-    {
-      'key': 'freelance',
-      'label': 'عمل حر',
-      'icon': Icons.laptop_mac_rounded,
-      'color': AppColors.purple,
-    },
-    {
-      'key': 'investment',
-      'label': 'استثمار',
-      'icon': Icons.trending_up_rounded,
-      'color': AppColors.cyan,
-    },
-    {
-      'key': 'bonus',
-      'label': 'مكافأة',
-      'icon': Icons.card_giftcard_rounded,
-      'color': AppColors.accent,
-    },
-    {
-      'key': 'other',
-      'label': 'أخرى',
-      'icon': Icons.more_horiz_rounded,
-      'color': AppColors.success,
-    },
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -159,13 +126,13 @@ class IncomeFormSheet extends StatelessWidget {
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 reverse: true,
-                itemCount: _categories.length,
+                itemCount: IncomeCategories.values.length,
                 separatorBuilder: (_, __) => 10.horizontalSpace,
                 itemBuilder: (context, index) {
-                  final cat = _categories[index];
-                  final key = cat['key'] as String;
+final category = IncomeCategories.values[index];
+                  final key = category.key;
                   final isSelected = selectedCategory == key;
-                  final color = cat['color'] as Color;
+                  final color = category.color;
 
                   return GestureDetector(
                     onTap: () => onCategoryChanged(key),
@@ -193,14 +160,14 @@ class IncomeFormSheet extends StatelessWidget {
                                 : null,
                           ),
                           child: Icon(
-                            cat['icon'] as IconData,
+                           category.icon,
                             color: isSelected ? Colors.white : color,
                             size: 22.sp,
                           ),
                         ),
                         4.verticalSpace,
                         Text(
-                          cat['label'] as String,
+                         category.label,
                           style: context.textTheme.bodySmall?.copyWith(
                             color: isSelected
                                 ? (isDark ? Colors.white : Colors.black)

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:masrofy/core/constants/data.dart';
 import 'package:masrofy/core/extensions/build_context.dart';
 import 'package:masrofy/core/extensions/widget_extension.dart';
 import 'package:masrofy/core/themes/app_colors.dart';
@@ -21,23 +22,8 @@ class IncomePage extends ConsumerStatefulWidget {
 }
 
 class _IncomePageState extends ConsumerState<IncomePage> {
-  int _selMonth = DateTime.now().month, _selYear = DateTime.now().year;
-
-  static const _months = [
-    'يناير',
-    'فبراير',
-    'مارس',
-    'أبريل',
-    'مايو',
-    'يونيو',
-    'يوليو',
-    'أغسطس',
-    'سبتمبر',
-    'أكتوبر',
-    'نوفمبر',
-    'ديسمبر',
-  ];
-
+  int _selMonth = DateTime.now().month;
+ int _selYear = DateTime.now().year;
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(incomeControllerProvider);
@@ -71,13 +57,13 @@ class _IncomePageState extends ConsumerState<IncomePage> {
                   '${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}',
                   ...entries.map((e) => e.monthYear),
                 }.toList()..sort((a, b) => b.compareTo(a));
-
+ 
                 return Column(
                   children: [
                     IncomeSummaryCard(
                       totalIncome: total,
                       entryCount: filtered.length,
-                      monthLabel: '${_months[_selMonth - 1]} $_selYear',
+                      monthLabel: '${months[_selMonth - 1]} $_selYear',
                     ),
                     AppSizes.l.verticalSpace,
                     SizedBox(
@@ -88,8 +74,9 @@ class _IncomePageState extends ConsumerState<IncomePage> {
                         itemCount: keys.length,
                         separatorBuilder: (_, __) => 8.horizontalSpace,
                         itemBuilder: (context, i) {
+                         
                           final p = keys[i].split('-');
-                          final y = int.parse(p[0]), m = int.parse(p[1]);
+                          final y = int.parse(p[0]),m = int.parse(p[1]);
                           final active = _selMonth == m && _selYear == y;
                           return GestureDetector(
                             onTap: () => setState(() {
@@ -119,7 +106,7 @@ class _IncomePageState extends ConsumerState<IncomePage> {
                                       ),
                               ),
                               child: Text(
-                                '${_months[m - 1]} $y',
+                                '${months[m - 1]} $y',
                                 style: context.textTheme.bodySmall?.copyWith(
                                   color: active
                                       ? Colors.white
@@ -203,7 +190,7 @@ class _IncomePageState extends ConsumerState<IncomePage> {
           descriptionController: descCtrl,
           amountController: amountCtrl,
           selectedCategory: cat,
-          onCategoryChanged: (v) => setState(() => cat = v),
+          onCategoryChanged: (val) => setState(() => cat = val),
           onDelete: entry == null
               ? null
               : () async {
