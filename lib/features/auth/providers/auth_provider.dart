@@ -76,7 +76,6 @@ final authControllerProvider = AsyncNotifierProvider<AuthController,void>(AuthCo
 
 
 
-
 // import 'dart:async';
 // import 'package:flutter_riverpod/flutter_riverpod.dart';
 // import 'package:masrofy/features/auth/repository/auth_repository.dart';

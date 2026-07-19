@@ -1,17 +1,22 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:masrofy/core/extensions/build_context.dart';
 import 'package:masrofy/core/extensions/num_extension.dart';
 import 'package:masrofy/core/extensions/widget_extension.dart';
 import 'package:masrofy/core/themes/app_colors.dart';
 import 'package:masrofy/core/themes/app_sizes.dart';
+import 'package:masrofy/features/home/controllers/reports_provider.dart';
+import 'package:masrofy/features/home/models/category_report_model.dart';
 
-class ReportsTab extends StatelessWidget {
+class ReportsTab extends ConsumerWidget {
   const ReportsTab({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final controller = ref.watch(reportsDataProvider);
+    final filter = ref.watch(reportsFilterProvider);
     final isDark = context.isDarkMode;
     final iconColor = context.colorScheme.onSurface;
 
@@ -38,7 +43,7 @@ class ReportsTab extends StatelessWidget {
                 ),
               ),
               // Placeholder for symmetry
-              AppSizes.xl.horizontalSpace
+              AppSizes.xl.horizontalSpace,
             ],
           ),
           AppSizes.m.verticalSpace,
@@ -46,107 +51,156 @@ class ReportsTab extends StatelessWidget {
           // ── Period Filter Pill ──
           Align(
             alignment: Alignment.centerRight,
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.cardDark : Colors.white,
-                borderRadius: AppSizes.rM.radius,
-                border: Border.all(
-                  color: isDark ? AppColors.borderDark : AppColors.borderLight,
+            child: PopupMenuButton<ReportsFilter>(
+              initialValue: filter,
+              onSelected: (filter) {
+                ref.read(reportsFilterProvider.notifier).setFilter(filter);
+              },
+              itemBuilder: (context) => ReportsFilter.values.map((filter) {
+                return PopupMenuItem<ReportsFilter>(
+                  value: filter,
+                  child: Text(filter.name, style: context.textTheme.bodyMedium),
+                );
+              }).toList(),
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.cardDark : Colors.white,
+                  borderRadius: BorderRadius.circular(AppSizes.rM),
+                  border: Border.all(
+                    color: isDark
+                        ? AppColors.borderDark
+                        : AppColors.borderLight,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  textDirection: TextDirection.rtl,
+                  children: [
+                    Text(
+                      filter.name,
+                      style: context.textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    AppSizes.xs.horizontalSpace,
+                    Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      size: AppSizes.iconS,
+                      color: isDark
+                          ? AppColors.textSecondaryDark
+                          : AppColors.textSecondaryLight,
+                    ),
+                  ],
                 ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
+            ),
+          ),
+          AppSizes.m.verticalSpace,
+          controller.when(
+            error: (error, stackTrace) =>
+                Text("حدث خطأ ما ").center().paddingAll(AppSizes.xl),
+            loading: () => CircularProgressIndicator.adaptive()
+                .center()
+                .paddingAll(AppSizes.xl),
+
+            data: (data) {
+              String? getChangeText(double? change) {
+                if (change == null || change == 0.0) return null;
+                final sign = change > 0 ? '▲' : '▼';
+                return '$sign ${change.abs().toStringAsFixed(1)}%';
+              }
+
+              Color getChangeColor(double? change, bool isIncome) {
+                if (change == null) return Colors.transparent;
+                if (isIncome) {
+                  return change >= 0 ? AppColors.income : AppColors.expense;
+                } else {
+                  return change >= 0 ? AppColors.expense : AppColors.income;
+                }
+              }
+
+              final subText = filter == ReportsFilter.thisYear
+                  ? 'من العام الماضي'
+                  : 'من الشهر الماضي';
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    'هذا الشهر',
-                    style: context.textTheme.bodySmall
+                  Row(
+                    children: [
+                      _StatCard(
+                        label: 'إجمالي الدخل',
+                        amount: data.totalIncome.formatAmount,
+                        changeText: getChangeText(data.incomeChange),
+                        changeColor: getChangeColor(data.incomeChange, true),
+                        subText: data.incomeChange != null ? subText : '',
+                      ),
+                      AppSizes.m.horizontalSpace,
+                      _StatCard(
+                        label: 'إجمالي المصروفات',
+                        amount: data.totalExpense.formatAmount,
+                        changeText: getChangeText(data.expenseChange),
+                        changeColor: getChangeColor(data.expenseChange, false),
+                        subText: data.expenseChange != null ? subText : '',
+                      ),
+                    ],
                   ),
-                  AppSizes.xs.horizontalSpace,
-                  Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    size: AppSizes.iconS,
-                    color: isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondaryLight,
+                  AppSizes.m.verticalSpace,
+                  Row(
+                    children: [
+                      _StatCard(
+                        label: 'صافي الدخل',
+                        amount: data.netIncome.formatAmount,
+                        subText: '',
+                      ),
+                      AppSizes.m.horizontalSpace,
+                      _StatCard(
+                        label: 'معدل التوفير',
+                        amount: data.savingsRate.toStringAsFixed(0) + "%",
+                        subText: 'من الدخل',
+                        isPercentage: true,
+                      ),
+                    ],
+                  ),
+                  AppSizes.l.verticalSpace,
+                  Container(
+                    padding: AppSizes.m.allPadding,
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.cardDark : Colors.white,
+                      borderRadius: AppSizes.rXL.radius,
+                      border: Border.all(
+                        color: isDark
+                            ? AppColors.borderDark
+                            : AppColors.borderLight,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        // Section Title
+                        Text(
+                          'المصروفات حسب الفئة',
+                          style: context.textTheme.titleMedium,
+                          textAlign: TextAlign.center,
+                        ),
+                        AppSizes.l.verticalSpace,
+
+                        // Donut Chart
+                        SizedBox(
+                          width: 200.w,
+                          height: 200.h,
+                          child: _DonutChart(data.categoryItems),
+                        ),
+                        AppSizes.l.verticalSpace,
+
+                        // Category Legend
+                        _CategoryLegend(data.categoryItems),
+                      ],
+                    ),
                   ),
                 ],
-              ),
-            ),
-          ),
-          AppSizes.m.verticalSpace,
-
-          // ── 4 Stat Cards (2 × 2 Grid) ──
-          Row(
-            children: [
-              _StatCard(
-                label: 'إجمالي الدخل',
-                amount: '27,850',
-                changeText: '▲ 12%',
-                changeColor: AppColors.income,
-                subText: 'من الشهر الماضي',
-              ),
-              AppSizes.m.horizontalSpace,
-              _StatCard(
-                label: 'إجمالي المصروفات',
-                amount: '15,400',
-                changeText: '▼ 8%',
-                changeColor: AppColors.expense,
-                subText: 'من الشهر الماضي',
-              ),
-            ],
-          ),
-          AppSizes.m.verticalSpace,
-          Row(
-            children: [
-              _StatCard(
-                label: 'صافي الدخل',
-                amount: '12,450',
-                subText: '',
-              ),
-              AppSizes.m.horizontalSpace,
-              _StatCard(
-                label: 'معدل التوفير',
-                amount: '45%',
-                subText: 'من الدخل',
-                isPercentage: true,
-              ),
-            ],
-          ),
-          AppSizes.l.verticalSpace,
-
-          // ── Expenses by Category Section ──
-          Container(
-            padding: AppSizes.m.allPadding,
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.cardDark : Colors.white,
-              borderRadius: AppSizes.rXL.radius,
-              border: Border.all(
-                color: isDark ? AppColors.borderDark : AppColors.borderLight,
-              ),
-            ),
-            child: Column(
-              children: [
-                // Section Title
-                Text(
-                  'المصروفات حسب الفئة',
-                  style: context.textTheme.titleMedium,
-                  textAlign: TextAlign.center,
-                ),
-                AppSizes.l.verticalSpace,
-
-                // Donut Chart
-                SizedBox(
-                  width: 200.w,
-                  height: 200.h,
-                  child: const _DonutChart(),
-                ),
-                AppSizes.l.verticalSpace,
-
-                // Category Legend
-                const _CategoryLegend(),
-              ],
-            ),
+              );
+            },
           ),
         ],
       ).paddingAll(AppSizes.screenPadding),
@@ -212,10 +266,7 @@ class _StatCard extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-              Text(
-                amount,
-                style: context.textTheme.titleLarge
-              ),
+              Text(amount, style: context.textTheme.titleLarge),
             ],
           ),
           if (changeText != null) ...[
@@ -251,12 +302,16 @@ class _StatCard extends StatelessWidget {
 
 // ── Donut Chart (Custom Painter) ──
 class _DonutChart extends StatelessWidget {
-  const _DonutChart();
+  final List<CategoryReportModel> categoryItems;
+  const _DonutChart(this.categoryItems);
 
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
-      painter: _DonutChartPainter(isDark: context.isDarkMode),
+      painter: _DonutChartPainter(
+        isDark: context.isDarkMode,
+        categoryItems: categoryItems,
+      ),
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -285,8 +340,9 @@ class _DonutChart extends StatelessWidget {
 
 class _DonutChartPainter extends CustomPainter {
   final bool isDark;
+  final List<CategoryReportModel> categoryItems;
 
-  _DonutChartPainter({required this.isDark});
+  _DonutChartPainter({required this.isDark, required this.categoryItems});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -294,16 +350,6 @@ class _DonutChartPainter extends CustomPainter {
     final radius = size.width / 2 - 12;
     const strokeWidth = 28.0;
     const gapAngle = 0.04; // small gap between segments
-
-    // Category data: percentage, color
-    final segments = [
-      (0.30, AppColors.expense), // الطعام – 30%
-      (0.25, AppColors.blue), // المواصلات – 25%
-      (0.15, AppColors.accent), // الفواتير – 15%
-      (0.12, AppColors.purple), // تسوق – 12%
-      (0.10, AppColors.orange), // ترفيه – 10%
-      (0.08, AppColors.grey400), // أخرى – 8%
-    ];
 
     // Background ring
     final bgPaint = Paint()
@@ -313,12 +359,19 @@ class _DonutChartPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
     canvas.drawCircle(center, radius, bgPaint);
 
+    if (categoryItems.isEmpty) {
+      return;
+    }
+
     // Draw segments
     var startAngle = -pi / 2; // start from top
-    for (final (fraction, color) in segments) {
-      final sweepAngle = 2 * pi * fraction - gapAngle;
+    for (final item in categoryItems) {
+      if (item.percentage <= 0) continue;
+      final sweepAngle = 2 * pi * item.percentage - gapAngle;
+      if (sweepAngle <= 0) continue;
+
       final paint = Paint()
-        ..color = color
+        ..color = item.color
         ..style = PaintingStyle.stroke
         ..strokeWidth = strokeWidth
         ..strokeCap = StrokeCap.round;
@@ -336,60 +389,37 @@ class _DonutChartPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _DonutChartPainter oldDelegate) =>
-      isDark != oldDelegate.isDark;
+      isDark != oldDelegate.isDark ||
+      categoryItems != oldDelegate.categoryItems;
 }
 
 // ── Category Legend ──
 class _CategoryLegend extends StatelessWidget {
-  const _CategoryLegend();
+  final List<CategoryReportModel> categoryItems;
+  const _CategoryLegend(this.categoryItems);
 
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
-
-    final categories = [
-      {
-        'label': 'المواصلات',
-        'color': AppColors.blue,
-        'percentage': '25%',
-        'amount': 'EGP 3,850',
-      },
-      {
-        'label': 'الطعام',
-        'color': AppColors.expense,
-        'percentage': '30%',
-        'amount': 'EGP 4,620',
-      },
-      {
-        'label': 'الفواتير',
-        'color': AppColors.accent,
-        'percentage': '15%',
-        'amount': 'EGP 2,310',
-      },
-      {
-        'label': 'تسوق',
-        'color': AppColors.purple,
-        'percentage': '12%',
-        'amount': 'EGP 1,848',
-      },
-      {
-        'label': 'ترفيه',
-        'color': AppColors.orange,
-        'percentage': '10%',
-        'amount': 'EGP 1,540',
-      },
-      {
-        'label': 'أخرى',
-        'color': AppColors.grey400,
-        'percentage': '8%',
-        'amount': 'EGP 1,232',
-      },
-    ];
+    if (categoryItems.isEmpty) {
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: 16.h),
+        child: Text(
+          'لا توجد مصروفات مسجلة لهذه الفترة',
+          style: context.textTheme.bodyMedium?.copyWith(
+            color: isDark
+                ? AppColors.textSecondaryDark
+                : AppColors.textSecondaryLight,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
 
     return Column(
-      children: categories.map((cat) {
+      children: categoryItems.map((cat) {
         return Padding(
-          padding:  6.h.verticalPadding,
+          padding: 6.h.verticalPadding,
           child: Row(
             children: [
               // Color dot
@@ -397,21 +427,21 @@ class _CategoryLegend extends StatelessWidget {
                 width: 10.w,
                 height: 10.h,
                 decoration: BoxDecoration(
-                  color: cat['color'] as Color,
+                  color: cat.color,
                   shape: BoxShape.circle,
                 ),
               ),
               AppSizes.s.horizontalSpace,
               // Category name
               Text(
-                cat['label'] as String,
+                cat.label,
                 style: context.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w500,
                 ),
               ).expanded(),
               // Percentage
               Text(
-                cat['percentage'] as String,
+                "${(cat.percentage * 100).toStringAsFixed(0)} %",
                 style: context.textTheme.bodySmall?.copyWith(
                   color: isDark
                       ? AppColors.textSecondaryDark
@@ -422,7 +452,7 @@ class _CategoryLegend extends StatelessWidget {
               AppSizes.m.horizontalSpace,
               // Amount
               Text(
-                cat['amount'] as String,
+                "EGP ${cat.amount.formatAmount}",
                 style: context.textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
